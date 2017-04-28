@@ -7,14 +7,23 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/kidoman/go-steam"
+	"github.com/galexrt/go-steam"
 )
 
+var (
+	debug          bool
+	connectTimeout string
+)
+
+func init() {
+	flag.BoolVar(&debug, "debug", false, "debug")
+	flag.StringVar(&connectTimeout, "timeout", "1s", "Connection timeout")
+}
+
 func main() {
-	debug := flag.Bool("debug", false, "debug")
 	flag.Parse()
-	if *debug {
-		steam.SetLog(log.New())
+	if debug {
+		log.SetLevel(log.DebugLevel)
 	}
 	addr := os.Getenv("ADDR")
 	pass := os.Getenv("RCON_PASSWORD")
@@ -23,8 +32,10 @@ func main() {
 		return
 	}
 	for {
-		o := &steam.ConnectOptions{RCONPassword: pass}
-		rcon, err := steam.Connect(addr, o)
+		rcon, err := steam.Connect(addr, &steam.ConnectOptions{
+			RCONPassword: pass,
+			Timeout:      connectTimeout,
+		})
 		if err != nil {
 			fmt.Println(err)
 			time.Sleep(1 * time.Second)

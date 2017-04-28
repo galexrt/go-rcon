@@ -3,12 +3,11 @@ package steam
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
 	"net"
 	"sync"
 	"time"
 
-	logrus "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 )
 
 type DialFn func(network, address string) (net.Conn, error)
@@ -20,6 +19,8 @@ type Server struct {
 	dial DialFn
 
 	rconPassword string
+
+	timeout time.Duration
 
 	usock          *udpSocket
 	udpInitialized bool
@@ -38,6 +39,8 @@ type ConnectOptions struct {
 
 	// RCON password.
 	RCONPassword string
+
+	Timeout string
 }
 
 // Connect to the source server.
@@ -49,6 +52,12 @@ func Connect(addr string, os ...*ConnectOptions) (_ *Server, err error) {
 		o := os[0]
 		s.dial = o.Dial
 		s.rconPassword = o.RCONPassword
+		s.timeout, err = time.ParseDuration(o.Timeout)
+		if err != nil {
+			log.WithFields(logrus.Fields{
+				"err": err,
+			}).Fatal("steam: could not parse timeout duration")
+		}
 	}
 	if s.dial == nil {
 		s.dial = (&net.Dialer{
@@ -81,7 +90,7 @@ func (s *Server) init() error {
 		return errors.New("steam: server needs a address")
 	}
 	var err error
-	if s.usock, err = newUDPSocket(s.dial, s.addr); err != nil {
+	if s.usock, err = newUDPSocket(s.dial, s.addr, s.timeout); err != nil {
 		log.WithFields(logrus.Fields{
 			"err": err,
 		}).Error("steam: could not open udp socket")
@@ -97,7 +106,7 @@ func (s *Server) initRCON() (err error) {
 	log.WithFields(logrus.Fields{
 		"addr": s.addr,
 	}).Debug("steam: connecting rcon")
-	if s.rsock, err = newRCONSocket(s.dial, s.addr); err != nil {
+	if s.rsock, err = newRCONSocket(s.dial, s.addr, s.timeout); err != nil {
 		log.WithFields(logrus.Fields{
 			"err": err,
 		}).Error("steam: could not open tcp socket")
@@ -319,21 +328,9 @@ func (s *Server) Send(cmd string) (string, error) {
 var (
 	trailer = []byte{0x00, 0x01, 0x00, 0x00}
 
-	ErrRCONAuthFailed = errors.New("steam: authentication failed")
-
+	ErrRCONAuthFailed         = errors.New("steam: authentication failed")
 	ErrRCONNotInitialized     = errors.New("steam: rcon is not initialized")
 	ErrInvalidResponseType    = errors.New("steam: invalid response type from server")
 	ErrInvalidResponseID      = errors.New("steam: invalid response id from server")
 	ErrInvalidResponseTrailer = errors.New("steam: invalid response trailer from server")
 )
-
-var log *logrus.Logger
-
-func SetLog(l *logrus.Logger) {
-	log = l
-}
-
-func init() {
-	log = logrus.New()
-	log.Out = ioutil.Discard
-}

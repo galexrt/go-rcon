@@ -8,15 +8,16 @@ import (
 )
 
 type udpSocket struct {
-	conn net.Conn
+	conn    net.Conn
+	timeout time.Duration
 }
 
-func newUDPSocket(dial DialFn, addr string) (*udpSocket, error) {
+func newUDPSocket(dial DialFn, addr string, timeout time.Duration) (*udpSocket, error) {
 	conn, err := dial("udp", addr)
 	if err != nil {
 		return nil, err
 	}
-	return &udpSocket{conn}, nil
+	return &udpSocket{conn, timeout}, nil
 }
 
 func (s *udpSocket) close() {
@@ -35,7 +36,7 @@ func (s *udpSocket) send(payload []byte) error {
 }
 
 func (s *udpSocket) receivePacket() ([]byte, error) {
-	if err := s.conn.SetReadDeadline(time.Now().Add(1 * time.Second)); err != nil {
+	if err := s.conn.SetReadDeadline(time.Now().Add(s.timeout)); err != nil {
 		return nil, err
 	}
 	buf := make([]byte, 1500)
