@@ -376,6 +376,6 @@ func (r *rconResponse) unmarshalBinary(data []byte) (err error) {
 	r.size = readLong(buf)
 	r.id = readLong(buf)
 	r.typ = rconRequestType(readLong(buf))
-	r.body = readBytes(buf, int(r.size-10))
+	r.body = readBytes(buf, int(len(data)-14))
 	return nil
 }
