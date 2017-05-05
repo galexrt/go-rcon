@@ -3,6 +3,7 @@ package steam
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"io"
 	"math"
 	"strconv"
@@ -14,92 +15,95 @@ func (e parseError) Error() string {
 	return string(e)
 }
 
-var errCouldNotReadData = parseError("steam: could not read data")
-var errNotEnoughDataInResponse = parseError("steam: not enough data in response")
-var errBadData = parseError("steam: bad data in response")
+var (
+	errCouldNotReadData        = errors.New("steam: could not read data")
+	errNotEnoughDataInResponse = errors.New("steam: not enough data in response")
+	errBadData                 = errors.New("steam: bad data in response")
+)
 
-func readByte(r io.Reader) byte {
+func readByte(r io.Reader) (byte, error) {
 	buf := make([]byte, 1)
 	_, err := io.ReadFull(r, buf)
-	must(err)
-	return buf[0]
+	return buf[0], err
 }
 
-func readBytes(r io.Reader, n int) (buf []byte) {
-	buf = make([]byte, n)
+func readBytes(r io.Reader, n int) ([]byte, error) {
+	buf := make([]byte, n)
 	_, err := io.ReadFull(r, buf)
-	must(err)
-	return
+	return buf, err
 }
 
-func readShort(r io.Reader) (v int16) {
-	must(binary.Read(r, binary.LittleEndian, &v))
-	return
+func readShort(r io.Reader) (int16, error) {
+	var v int16
+	err := binary.Read(r, binary.LittleEndian, &v)
+	return v, err
 }
 
-func readLong(r io.Reader) (v int32) {
-	must(binary.Read(r, binary.LittleEndian, &v))
-	return
+func readLong(r io.Reader) (int32, error) {
+	var v int32
+	err := binary.Read(r, binary.LittleEndian, &v)
+	return v, err
 }
 
-func readULong(r io.Reader) (v uint32) {
-	must(binary.Read(r, binary.LittleEndian, &v))
-	return
+func readULong(r io.Reader) (uint32, error) {
+	var v uint32
+	err := binary.Read(r, binary.LittleEndian, &v)
+	return v, err
 }
 
-func readLongLong(r io.Reader) (v int64) {
-	must(binary.Read(r, binary.LittleEndian, &v))
-	return
+func readLongLong(r io.Reader) (int64, error) {
+	var v int64
+	err := binary.Read(r, binary.LittleEndian, &v)
+	return v, err
 }
 
-func readString(r io.Reader) string {
+func readString(r io.Reader) (string, error) {
 	if buf, ok := r.(*bytes.Buffer); ok {
 		// See if we are being passed a bytes.Buffer.
 		// Fast path.
 		bytes, err := buf.ReadBytes(0)
-		must(err)
-		return string(bytes)
+		return string(bytes), err
 	}
 	var buf bytes.Buffer
 	for {
 		b := make([]byte, 1)
 		_, err := io.ReadFull(r, b)
-		must(err)
+		if err != nil {
+			return "", err
+		}
 		buf.WriteByte(b[0])
 		if b[0] == 0 {
 			break
 		}
 	}
-	return buf.String()
+	return buf.String(), nil
 }
 
-func readFloat(r io.Reader) float32 {
-	v := readULong(r)
-	return math.Float32frombits(v)
+func readFloat(r io.Reader) (float32, error) {
+	v, err := readULong(r)
+	return math.Float32frombits(v), err
 }
 
-func toInt(v interface{}) int {
+func toInt(v interface{}) (int, error) {
 	switch v := v.(type) {
 	case byte:
-		return int(v)
 	case int16:
-		return int(v)
 	case int32:
-		return int(v)
 	case int64:
-		return int(v)
+		return int(v), nil
 	case string:
 		i, err := strconv.Atoi(v)
 		if err != nil {
-			panic(errBadData)
+			return 0, err
 		}
-		return i
+		return i, nil
 	}
-	panic(errBadData)
+	return 0, errBadData
 }
 
-func writeRequestPrefix(buf *bytes.Buffer) {
-	buf.Write(requestPrefix)
+func writeRequestPrefix(buf *bytes.Buffer) error {
+	_, err := buf.Write(requestPrefix)
+	return err
 }
 
 var requestPrefix = []byte{0xFF, 0xFF, 0xFF, 0xFF}
@@ -113,10 +117,10 @@ func writeByte(buf *bytes.Buffer, v byte) {
 	buf.WriteByte(v)
 }
 
-func writeLong(buf *bytes.Buffer, v int32) {
-	must(binary.Write(buf, binary.LittleEndian, v))
+func writeLong(buf *bytes.Buffer, v int32) error {
+	return binary.Write(buf, binary.LittleEndian, v)
 }
 
-func writeNull(buf *bytes.Buffer) {
-	buf.WriteByte(0)
+func writeNull(buf *bytes.Buffer) error {
+	return buf.WriteByte(0)
 }

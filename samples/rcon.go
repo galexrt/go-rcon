@@ -7,7 +7,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/galexrt/go-steam"
+	steam "github.com/galexrt/go-steam"
 )
 
 var (
@@ -51,11 +51,5 @@ func main() {
 			fmt.Println(resp)
 			time.Sleep(5 * time.Second)
 		}
-	}
-}
-
-func must(err error) {
-	if err != nil {
-		panic(err)
 	}
 }
