@@ -1,4 +1,4 @@
-package steam
+package rcon
 
 import (
 	"io/ioutil"

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	steam "github.com/galexrt/go-steam"
+	rcon "github.com/galexrt/go-rcon"
 )
 
 var (
@@ -32,7 +32,7 @@ func main() {
 		return
 	}
 	for {
-		rcon, err := steam.Connect(addr, &steam.ConnectOptions{
+		rcon, err := rcon.Connect(addr, &rcon.ConnectOptions{
 			RCONPassword: pass,
 			Timeout:      connectTimeout,
 		})

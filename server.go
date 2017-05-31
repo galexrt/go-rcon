@@ -1,4 +1,4 @@
-package steam
+package rcon
 
 import (
 	"bytes"
@@ -54,7 +54,7 @@ func Connect(addr string, os ...*ConnectOptions) (_ *Server, err error) {
 		if err != nil {
 			log.WithFields(logrus.Fields{
 				"err": err,
-			}).Fatal("steam: could not parse timeout duration")
+			}).Fatal("rcon: could not parse timeout duration")
 		}
 	}
 	if s.dial == nil {
@@ -77,15 +77,15 @@ func (s *Server) String() string {
 
 func (s *Server) initRCON() (err error) {
 	if s.addr == "" {
-		return errors.New("steam: server needs a address")
+		return errors.New("rcon: server needs a address")
 	}
 	log.WithFields(logrus.Fields{
 		"addr": s.addr,
-	}).Debug("steam: connecting rcon")
+	}).Debug("rcon: connecting rcon")
 	if s.rsock, err = newRCONSocket(s.dial, s.addr, s.timeout); err != nil {
 		log.WithFields(logrus.Fields{
 			"err": err,
-		}).Error("steam: could not open tcp socket")
+		}).Error("rcon: could not open tcp socket")
 		return err
 	}
 	defer func() {
@@ -96,7 +96,7 @@ func (s *Server) initRCON() (err error) {
 	if err := s.authenticate(); err != nil {
 		log.WithFields(logrus.Fields{
 			"err": err,
-		}).Error("steam: could not authenticate")
+		}).Error("rcon: could not authenticate")
 		return err
 	}
 	s.rconInitialized = true
@@ -106,7 +106,7 @@ func (s *Server) initRCON() (err error) {
 func (s *Server) authenticate() error {
 	log.WithFields(logrus.Fields{
 		"addr": s.addr,
-	}).Debug("steam: authenticating")
+	}).Debug("rcon: authenticating")
 	req := newRCONRequest(rrtAuth, s.rconPassword)
 	data, _ := req.marshalBinary()
 	if err := s.rsock.send(data); err != nil {
@@ -119,7 +119,7 @@ func (s *Server) authenticate() error {
 	}
 	log.WithFields(logrus.Fields{
 		"data": data,
-	}).Debug("steam: received empty response")
+	}).Debug("rcon: received empty response")
 	var resp rconResponse
 	if err = resp.unmarshalBinary(data); err != nil {
 		return err
@@ -141,7 +141,7 @@ func (s *Server) authenticate() error {
 	if resp.typ != rrtAuthResp || resp.id != req.id {
 		return ErrRCONAuthFailed
 	}
-	log.Debug("steam: authenticated")
+	log.Debug("rcon: authenticated")
 	return nil
 }
 
@@ -164,7 +164,7 @@ func (s *Server) Send(cmd string) (string, error) {
 	if err := s.rsock.send(data); err != nil {
 		log.WithFields(logrus.Fields{
 			"err": err,
-		}).Error("steam: sending rcon request")
+		}).Error("rcon: sending rcon request")
 		return "", err
 	}
 	// Send the mirror packet.
@@ -173,7 +173,7 @@ func (s *Server) Send(cmd string) (string, error) {
 	if err := s.rsock.send(data); err != nil {
 		log.WithFields(logrus.Fields{
 			"err": err,
-		}).Error("steam: sending rcon mirror request")
+		}).Error("rcon: sending rcon mirror request")
 		return "", err
 	}
 	var (
@@ -186,14 +186,14 @@ func (s *Server) Send(cmd string) (string, error) {
 		if err != nil {
 			log.WithFields(logrus.Fields{
 				"err": err,
-			}).Error("steam: receiving rcon response")
+			}).Error("rcon: receiving rcon response")
 			return "", err
 		}
 		var resp rconResponse
 		if err = resp.unmarshalBinary(data); err != nil {
 			log.WithFields(logrus.Fields{
 				"err": err,
-			}).Error("steam: decoding response")
+			}).Error("rcon: decoding response")
 			return "", err
 		}
 		if resp.typ != rrtRespValue {
@@ -223,9 +223,9 @@ func (s *Server) Send(cmd string) (string, error) {
 var (
 	trailer = []byte{0x00, 0x01, 0x00, 0x00}
 
-	ErrRCONAuthFailed         = errors.New("steam: authentication failed")
-	ErrRCONNotInitialized     = errors.New("steam: rcon is not initialized")
-	ErrInvalidResponseType    = errors.New("steam: invalid response type from server")
-	ErrInvalidResponseID      = errors.New("steam: invalid response id from server")
-	ErrInvalidResponseTrailer = errors.New("steam: invalid response trailer from server")
+	ErrRCONAuthFailed         = errors.New("rcon: authentication failed")
+	ErrRCONNotInitialized     = errors.New("rcon: rcon is not initialized")
+	ErrInvalidResponseType    = errors.New("rcon: invalid response type from server")
+	ErrInvalidResponseID      = errors.New("rcon: invalid response id from server")
+	ErrInvalidResponseTrailer = errors.New("rcon: invalid response trailer from server")
 )

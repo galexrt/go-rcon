@@ -1,4 +1,4 @@
-package steam
+package rcon
 
 import (
 	"bytes"
@@ -16,9 +16,9 @@ func (e parseError) Error() string {
 }
 
 var (
-	errCouldNotReadData        = errors.New("steam: could not read data")
-	errNotEnoughDataInResponse = errors.New("steam: not enough data in response")
-	errBadData                 = errors.New("steam: bad data in response")
+	errCouldNotReadData        = errors.New("rcon: could not read data")
+	errNotEnoughDataInResponse = errors.New("rcon: not enough data in response")
+	errBadData                 = errors.New("rcon: bad data in response")
 )
 
 func readByte(r io.Reader) (byte, error) {
