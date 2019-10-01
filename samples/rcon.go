@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	rcon "github.com/galexrt/go-rcon"
+	log "github.com/sirupsen/logrus"
 )
 
 var (

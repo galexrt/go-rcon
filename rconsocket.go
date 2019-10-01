@@ -27,7 +27,7 @@ func (s *rconSocket) close() {
 }
 
 func (s *rconSocket) send(p []byte) error {
-	if err := s.conn.SetWriteDeadline(time.Now().Add(s.timeout)); err != nil {
+	if err := s.conn.SetDeadline(time.Now().Add(s.timeout)); err != nil {
 		return err
 	}
 	_, err := s.conn.Write(p)
@@ -58,7 +58,7 @@ func (s *rconSocket) receive() (_ []byte, err error) {
 			"bytes": total,
 		}).Debug("rcon: reading")
 		b := make([]byte, total)
-		if err = s.conn.SetReadDeadline(time.Now().Add(s.timeout)); err != nil {
+		if err = s.conn.SetDeadline(time.Now().Add(s.timeout)); err != nil {
 			return nil, err
 		}
 		n, err := s.conn.Read(b)
