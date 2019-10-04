@@ -2,6 +2,7 @@ package rcon
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net"
 	"time"
@@ -78,10 +79,7 @@ func (s *rconSocket) receive() (_ []byte, err error) {
 				}).Debug("rcon: read EOF")
 				break
 			}
-			log.WithFields(logrus.Fields{
-				"err": err,
-			}).Error("rcon: could not receive data")
-			return nil, err
+			return nil, fmt.Errorf("rcon: could not receive data. %+v", err)
 		}
 		log.WithFields(logrus.Fields{
 			"bytes": total,

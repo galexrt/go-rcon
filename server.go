@@ -3,6 +3,7 @@ package rcon
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"net"
 	"sync"
 	"time"
@@ -83,10 +84,7 @@ func (s *Server) initRCON() (err error) {
 		"addr": s.addr,
 	}).Debug("rcon: connecting rcon")
 	if s.rsock, err = newRCONSocket(s.dial, s.addr, s.timeout); err != nil {
-		log.WithFields(logrus.Fields{
-			"err": err,
-		}).Error("rcon: could not open tcp socket")
-		return err
+		return fmt.Errorf("rcon: could not open tcp socket. %+v", err)
 	}
 	defer func() {
 		if err != nil {
@@ -94,10 +92,7 @@ func (s *Server) initRCON() (err error) {
 		}
 	}()
 	if err := s.authenticate(); err != nil {
-		log.WithFields(logrus.Fields{
-			"err": err,
-		}).Error("rcon: could not authenticate")
-		return err
+		return fmt.Errorf("rcon: could not authenticate. %+v", err)
 	}
 	s.rconInitialized = true
 	return nil
@@ -162,19 +157,13 @@ func (s *Server) Send(cmd string) (string, error) {
 	req := newRCONRequest(rrtExecCmd, cmd)
 	data, _ := req.marshalBinary()
 	if err := s.rsock.send(data); err != nil {
-		log.WithFields(logrus.Fields{
-			"err": err,
-		}).Error("rcon: sending rcon request")
-		return "", err
+		return "", fmt.Errorf("rcon: sending rcon request. %+v", err)
 	}
 	// Send the mirror packet.
 	reqMirror := newRCONRequest(rrtRespValue, "")
 	data, _ = reqMirror.marshalBinary()
 	if err := s.rsock.send(data); err != nil {
-		log.WithFields(logrus.Fields{
-			"err": err,
-		}).Error("rcon: sending rcon mirror request")
-		return "", err
+		return "", fmt.Errorf("rcon: sending rcon mirror request. %+v", err)
 	}
 	var (
 		buf       bytes.Buffer
@@ -184,17 +173,11 @@ func (s *Server) Send(cmd string) (string, error) {
 	for {
 		data, err := s.rsock.receive()
 		if err != nil {
-			log.WithFields(logrus.Fields{
-				"err": err,
-			}).Error("rcon: receiving rcon response")
-			return "", err
+			return "", fmt.Errorf("rcon: receiving rcon response. %+v", err)
 		}
 		var resp rconResponse
 		if err = resp.unmarshalBinary(data); err != nil {
-			log.WithFields(logrus.Fields{
-				"err": err,
-			}).Error("rcon: decoding response")
-			return "", err
+			return "", fmt.Errorf("rcon: decoding response. %+v", err)
 		}
 		if resp.typ != rrtRespValue {
 			return "", ErrInvalidResponseType
@@ -223,9 +206,14 @@ func (s *Server) Send(cmd string) (string, error) {
 var (
 	trailer = []byte{0x00, 0x01, 0x00, 0x00}
 
-	ErrRCONAuthFailed         = errors.New("rcon: authentication failed")
-	ErrRCONNotInitialized     = errors.New("rcon: rcon is not initialized")
-	ErrInvalidResponseType    = errors.New("rcon: invalid response type from server")
-	ErrInvalidResponseID      = errors.New("rcon: invalid response id from server")
+	// ErrRCONAuthFailed RCON Authentication failed error
+	ErrRCONAuthFailed = errors.New("rcon: authentication failed")
+	// ErrRCONNotInitialized RCON connection is not initialized error
+	ErrRCONNotInitialized = errors.New("rcon: rcon is not initialized")
+	// ErrInvalidResponseType RCON Invalid response type from server error
+	ErrInvalidResponseType = errors.New("rcon: invalid response type from server")
+	// ErrInvalidResponseID RCON invalid response id from server error
+	ErrInvalidResponseID = errors.New("rcon: invalid response id from server")
+	// ErrInvalidResponseTrailer RCON invalid response trailer from server error
 	ErrInvalidResponseTrailer = errors.New("rcon: invalid response trailer from server")
 )

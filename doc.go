@@ -1,4 +1,2 @@
-/*
-	Package rcon allows querying of Source servers.
-*/
+// Package rcon allows querying of Source servers.
 package rcon
