@@ -31,10 +31,14 @@ func main() {
 		fmt.Println("Please set ADDR & RCON_PASSWORD.")
 		return
 	}
+	connectTimeoutParsed, err := time.ParseDuration(connectTimeout)
+	if err != nil {
+		log.Fatal(err)
+	}
 	for {
 		rcon, err := rcon.Connect(addr, &rcon.ConnectOptions{
 			RCONPassword: pass,
-			Timeout:      connectTimeout,
+			Timeout:      connectTimeoutParsed,
 		})
 		if err != nil {
 			fmt.Println(err)

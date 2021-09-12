@@ -39,7 +39,7 @@ type ConnectOptions struct {
 	// RCON password.
 	RCONPassword string
 
-	Timeout string
+	Timeout time.Duration
 }
 
 // Connect to the source server.
@@ -51,7 +51,7 @@ func Connect(addr string, os ...*ConnectOptions) (_ *Server, err error) {
 		o := os[0]
 		s.dial = o.Dial
 		s.rconPassword = o.RCONPassword
-		s.timeout, err = time.ParseDuration(o.Timeout)
+		s.timeout = o.Timeout
 		if err != nil {
 			log.WithFields(logrus.Fields{
 				"err": err,
@@ -187,7 +187,7 @@ func (s *Server) Send(cmd string) (string, error) {
 			continue
 		}
 		if sawMirror {
-			if bytes.Compare(resp.body, trailer) == 0 {
+			if bytes.Equal(resp.body, trailer) {
 				break
 			}
 			return "", ErrInvalidResponseTrailer
