@@ -52,11 +52,6 @@ func Connect(addr string, os ...*ConnectOptions) (_ *Server, err error) {
 		s.dial = o.Dial
 		s.rconPassword = o.RCONPassword
 		s.timeout = o.Timeout
-		if err != nil {
-			log.WithFields(logrus.Fields{
-				"err": err,
-			}).Fatal("rcon: could not parse timeout duration")
-		}
 	}
 	if s.dial == nil {
 		s.dial = (&net.Dialer{
