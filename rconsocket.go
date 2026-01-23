@@ -51,11 +51,11 @@ func (s *rconSocket) receive() (_ []byte, err error) {
 		return nil, err
 	}
 	total := int(long)
-	log.WithFields(logrus.Fields{
+	logger.WithFields(logrus.Fields{
 		"total": total + 4,
 	}).Debug("rcon: reading packet")
 	for total > 0 {
-		log.WithFields(logrus.Fields{
+		logger.WithFields(logrus.Fields{
 			"bytes": total,
 		}).Debug("rcon: reading")
 		b := make([]byte, total)
@@ -64,7 +64,7 @@ func (s *rconSocket) receive() (_ []byte, err error) {
 		}
 		n, err := s.conn.Read(b)
 		if n > 0 {
-			log.WithFields(logrus.Fields{
+			logger.WithFields(logrus.Fields{
 				"bytes": n,
 			}).Debug("rcon: read")
 			if _, err = buf.Write(b); err != nil {
@@ -74,18 +74,18 @@ func (s *rconSocket) receive() (_ []byte, err error) {
 		}
 		if err != nil {
 			if err == io.EOF {
-				log.WithFields(logrus.Fields{
+				logger.WithFields(logrus.Fields{
 					"size": buf.Len(),
 				}).Debug("rcon: read EOF")
 				break
 			}
 			return nil, fmt.Errorf("rcon: could not receive data. %+v", err)
 		}
-		log.WithFields(logrus.Fields{
+		logger.WithFields(logrus.Fields{
 			"bytes": total,
 		}).Debug("rcon: remaining")
 	}
-	log.WithFields(logrus.Fields{
+	logger.WithFields(logrus.Fields{
 		"size": buf.Len(),
 	}).Debug("rcon: read packet")
 	return buf.Bytes(), nil

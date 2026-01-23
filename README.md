@@ -6,7 +6,7 @@ This is a fork of [github.com/kidoman/go-steam](https://github.com/kidoman/go-st
 
 ## Requirements
 
-* Go 1.1 or above
+* Go 1.24.12 or above
 
 ## Installation
 
@@ -19,6 +19,10 @@ go get github.com/galexrt/go-rcon
 ```
 go get -u github.com/galexrt/go-rcon
 ```
+
+## Notes
+
+- Library uses `log/slog` for logging. You can set your own logger using `rcon.SetLogger(yourLogger)`.
 
 ## License
 

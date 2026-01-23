@@ -7,8 +7,6 @@ import (
 	"net"
 	"sync"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 // DialFn connect to server using the options
@@ -75,9 +73,7 @@ func (s *Server) initRCON() (err error) {
 	if s.addr == "" {
 		return errors.New("rcon: server needs a address")
 	}
-	log.WithFields(logrus.Fields{
-		"addr": s.addr,
-	}).Debug("rcon: connecting rcon")
+	logger.V(4).WithValues("addr", s.addr).Info("rcon: connecting rcon")
 	if s.rsock, err = newRCONSocket(s.dial, s.addr, s.timeout); err != nil {
 		return fmt.Errorf("rcon: could not open tcp socket. %+v", err)
 	}
@@ -94,9 +90,7 @@ func (s *Server) initRCON() (err error) {
 }
 
 func (s *Server) authenticate() error {
-	log.WithFields(logrus.Fields{
-		"addr": s.addr,
-	}).Debug("rcon: authenticating")
+	logger.V(4).WithValues("addr", s.addr).Info("rcon: authenticating")
 	req := newRCONRequest(rrtAuth, s.rconPassword)
 	data, _ := req.marshalBinary()
 	if err := s.rsock.send(data); err != nil {
@@ -107,9 +101,7 @@ func (s *Server) authenticate() error {
 	if err != nil {
 		return err
 	}
-	log.WithFields(logrus.Fields{
-		"data": data,
-	}).Debug("rcon: received empty response")
+	logger.V(4).WithValues("data", data).Info("rcon: received empty response")
 	var resp rconResponse
 	if err = resp.unmarshalBinary(data); err != nil {
 		return err
@@ -131,7 +123,7 @@ func (s *Server) authenticate() error {
 	if resp.typ != rrtAuthResp || resp.id != req.id {
 		return ErrRCONAuthFailed
 	}
-	log.Debug("rcon: authenticated")
+	logger.V(4).Info("rcon: authenticated")
 	return nil
 }
 

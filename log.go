@@ -1,19 +1,18 @@
 package rcon
 
 import (
-	"io/ioutil"
-
-	"github.com/sirupsen/logrus"
+	"log/slog"
+	"os"
 )
 
-var log *logrus.Logger
+var logger *slog.Logger
 
 func init() {
-	log = logrus.New()
-	log.Out = ioutil.Discard
+	handler := slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError})
+	logger = slog.New(handler)
 }
 
-// SetLog set sirupsen logger
-func SetLog(l *logrus.Logger) {
-	log = l
+// SetLog set logr logger
+func SetLog(l *slog.Logger) {
+	logger = l
 }
