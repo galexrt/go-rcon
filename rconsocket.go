@@ -6,8 +6,6 @@ import (
 	"io"
 	"net"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 type rconSocket struct {
@@ -51,22 +49,16 @@ func (s *rconSocket) receive() (_ []byte, err error) {
 		return nil, err
 	}
 	total := int(long)
-	logger.WithFields(logrus.Fields{
-		"total": total + 4,
-	}).Debug("rcon: reading packet")
+	logger.With("total", total+4).Debug("rcon: reading packet")
 	for total > 0 {
-		logger.WithFields(logrus.Fields{
-			"bytes": total,
-		}).Debug("rcon: reading")
+		logger.With("bytes", total).Debug("rcon: reading")
 		b := make([]byte, total)
 		if err = s.conn.SetDeadline(time.Now().Add(s.timeout)); err != nil {
 			return nil, err
 		}
 		n, err := s.conn.Read(b)
 		if n > 0 {
-			logger.WithFields(logrus.Fields{
-				"bytes": n,
-			}).Debug("rcon: read")
+			logger.With("bytes", n).Debug("rcon: read")
 			if _, err = buf.Write(b); err != nil {
 				return nil, err
 			}
@@ -74,19 +66,13 @@ func (s *rconSocket) receive() (_ []byte, err error) {
 		}
 		if err != nil {
 			if err == io.EOF {
-				logger.WithFields(logrus.Fields{
-					"size": buf.Len(),
-				}).Debug("rcon: read EOF")
+				logger.With("size", buf.Len()).Debug("rcon: read EOF")
 				break
 			}
 			return nil, fmt.Errorf("rcon: could not receive data. %+v", err)
 		}
-		logger.WithFields(logrus.Fields{
-			"bytes": total,
-		}).Debug("rcon: remaining")
+		logger.With("bytes", total).Debug("rcon: remaining")
 	}
-	logger.WithFields(logrus.Fields{
-		"size": buf.Len(),
-	}).Debug("rcon: read packet")
+	logger.With("size", buf.Len()).Debug("rcon: read packet")
 	return buf.Bytes(), nil
 }

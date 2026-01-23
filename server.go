@@ -73,7 +73,7 @@ func (s *Server) initRCON() (err error) {
 	if s.addr == "" {
 		return errors.New("rcon: server needs a address")
 	}
-	logger.V(4).WithValues("addr", s.addr).Info("rcon: connecting rcon")
+	logger.With("addr", s.addr).Debug("rcon: connecting rcon")
 	if s.rsock, err = newRCONSocket(s.dial, s.addr, s.timeout); err != nil {
 		return fmt.Errorf("rcon: could not open tcp socket. %+v", err)
 	}
@@ -90,7 +90,7 @@ func (s *Server) initRCON() (err error) {
 }
 
 func (s *Server) authenticate() error {
-	logger.V(4).WithValues("addr", s.addr).Info("rcon: authenticating")
+	logger.With("addr", s.addr).Debug("rcon: authenticating")
 	req := newRCONRequest(rrtAuth, s.rconPassword)
 	data, _ := req.marshalBinary()
 	if err := s.rsock.send(data); err != nil {
@@ -101,7 +101,7 @@ func (s *Server) authenticate() error {
 	if err != nil {
 		return err
 	}
-	logger.V(4).WithValues("data", data).Info("rcon: received empty response")
+	logger.With("data", data).Debug("rcon: received empty response")
 	var resp rconResponse
 	if err = resp.unmarshalBinary(data); err != nil {
 		return err
@@ -123,7 +123,7 @@ func (s *Server) authenticate() error {
 	if resp.typ != rrtAuthResp || resp.id != req.id {
 		return ErrRCONAuthFailed
 	}
-	logger.V(4).Info("rcon: authenticated")
+	logger.Debug("rcon: authenticated")
 	return nil
 }
 
